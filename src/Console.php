@@ -1,6 +1,8 @@
 <?php
 declare(strict_types=1);
 
+namespace ricardoboss;
+
 use BadMethodCallException;
 use DateTime;
 use RuntimeException;

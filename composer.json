@@ -1,0 +1,17 @@
+{
+    "name": "ricardoboss/php-console-logger",
+    "description": "A simple console logger for scripts or small applications.",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Ricardo Boss",
+            "email": "contact@ricardoboss.de"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "\\ricardoboss\\": "src/"
+        }
+    }
+}
