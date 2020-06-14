@@ -45,6 +45,8 @@ class Console
 	private static $error_stream;
 
 	private static bool $timestamps = true;
+	private static bool $colors = true;
+	private static string $timestamp_format = "d.m.y H:i:s.v";
 
 	private static array $availableForegroundColors = [
 		'black' => ['set' => 30, 'unset' => 39],
@@ -107,9 +109,19 @@ class Console
 		}
 	}
 
-	public static function timestamps(bool $enable): void
+	public static function timestamps(bool $enable = true): void
 	{
 		self::$timestamps = $enable;
+	}
+
+	public static function colors(bool $enable = true): void
+	{
+		self::$colors = $enable;
+	}
+
+	public static function timestampFormat(string $format = "d.m.y H:i:s.v"): void
+	{
+		self::$timestamp_format = $format;
 	}
 
 	public static function link(string $link): string
@@ -176,14 +188,16 @@ class Console
 		bool $error = false): void
 	{
 		$stream = $error ? self::$error_stream : self::$output_stream;
-		$message_format = self::apply($message, $foreground, $background, $options);
+
+		if (self::$colors)
+			$message = self::apply($message, $foreground, $background, $options);
 
 		if (self::$timestamps) {
-			$time = '[' . (new DateTime())->format("d.m.y H:i:s.v") . ']';
-			$message_format = $time . ' ' . $message_format;
+			$time = '[' . (new DateTime())->format(self::$timestamp_format) . ']';
+			$message = $time . ' ' . $message;
 		}
 
-		fwrite($stream, $message_format . $suffix);
+		fwrite($stream, $message . $suffix);
 		fflush($stream);
 	}
 

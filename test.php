@@ -16,16 +16,25 @@ Console::critical("This is a critical message.");
 Console::alert("This is an alert message.");
 Console::emergency("This is an emergency message.");
 
-Console::timestamps(false);
-
-Console::warn("Timestamps are now disabled!");
-Console::info("Wanna know which time it is?");
-
-Console::timestamps(true);
-
-Console::notice("They are back now.");
 Console::info("This is a link: %s", Console::link("https://github.com/ricardoboss"));
 Console::info("%s %s %s %s", Console::green("You can"), Console::cyanBack("mix"), Console::magenta("and match"), Console::apply("the colors", 'black', 'yellow'));
 Console::info("%s %s", Console::underscore("and style"), Console::bold("the text"));
+
+Console::colors(false);
+Console::warn("Now colors are turned off.");
+Console::alert("This doesn't look alerting enough...");
+
+Console::timestampFormat("d.m. H:i:s.v");
+Console::critical("What year is it?!");
+Console::timestampFormat("H:i:s");
+Console::notice("You can change the timestamp format during runtime.");
+
+Console::timestamps(false);
+Console::warn("Timestamps are now disabled!");
+
+Console::timestampFormat();
+Console::colors();
+Console::timestamps();
+Console::notice("Call the methods with no format to restore the defaults.");
 
 Console::warn("The streams get closed automatically when the runtime shuts down.");
