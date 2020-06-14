@@ -188,9 +188,7 @@ class Console
 		bool $error = false): void
 	{
 		$stream = $error ? self::$error_stream : self::$output_stream;
-
-		if (self::$colors)
-			$message = self::apply($message, $foreground, $background, $options);
+		$message = self::apply($message, $foreground, $background, $options);
 
 		if (self::$timestamps) {
 			$time = '[' . (new DateTime())->format(self::$timestamp_format) . ']';
@@ -207,6 +205,9 @@ class Console
 		?string $background = null,
 		array $options = []): string
 	{
+		if (!self::$colors)
+			return $text;
+
 		$setCodes = [];
 		$unsetCodes = [];
 
