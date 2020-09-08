@@ -44,11 +44,11 @@ class Console
 	/** @var resource|null */
 	private static $error_stream;
 
-	private static bool $timestamps = true;
-	private static bool $colors = true;
-	private static string $timestamp_format = "d.m.y H:i:s.v";
+	private static $timestamps = true;
+	private static $colors = true;
+	private static $timestamp_format = "d.m.y H:i:s.v";
 
-	private static array $availableForegroundColors = [
+	private static $availableForegroundColors = [
 		'black' => ['set' => 30, 'unset' => 39],
 		'red' => ['set' => 31, 'unset' => 39],
 		'green' => ['set' => 32, 'unset' => 39],
@@ -60,7 +60,7 @@ class Console
 		'default' => ['set' => 39, 'unset' => 39],
 	];
 
-	private static array $availableBackgroundColors = [
+	private static $availableBackgroundColors = [
 		'black' => ['set' => 40, 'unset' => 49],
 		'red' => ['set' => 41, 'unset' => 49],
 		'green' => ['set' => 42, 'unset' => 49],
@@ -72,7 +72,7 @@ class Console
 		'default' => ['set' => 49, 'unset' => 49],
 	];
 
-	private static array $availableOptions = [
+	private static $availableOptions = [
 		'bold' => ['set' => 1, 'unset' => 22],
 		'underscore' => ['set' => 4, 'unset' => 24],
 		'blink' => ['set' => 5, 'unset' => 25],
