@@ -17,8 +17,9 @@ Console::alert("This is an alert message.");
 Console::emergency("This is an emergency message.");
 
 Console::info("This is a link: %s", Console::link("https://github.com/ricardoboss"));
-Console::info("%s %s %s %s", Console::green("You can"), Console::cyanBack("mix"), Console::magenta("and match"), Console::apply("the colors", 'black', 'yellow'));
+Console::info("%s %s %s %s %s", Console::green("You can"), Console::cyanBack("mix"), Console::magenta("and"), Console::gray("match"), Console::apply("the colors", 'light_blue', 'yellow'));
 Console::info("%s %s", Console::underscore("and style"), Console::bold("the text"));
+Console::info(Console::apply("You can " . Console::reset("reset") . " all styles within", 'cyan', null, ['bold', 'underscore']));
 
 Console::colors(false);
 Console::warn("Now colors are turned off.");

@@ -19,8 +19,18 @@ use function count;
  * @method static string blue(string $text)
  * @method static string magenta(string $text)
  * @method static string cyan(string $text)
+ * @method static string light_gray(string $text)
+ * @method static string gray(string $text)
+ * @method static string light_red(string $text)
+ * @method static string light_green(string $text)
+ * @method static string light_yellow(string $text)
+ * @method static string light_blue(string $text)
+ * @method static string light_magenta(string $text)
+ * @method static string light_cyan(string $text)
  * @method static string white(string $text)
+ *
  * @method static string default(string $text)
+ *
  * @method static string blackBack(string $text)
  * @method static string redBack(string $text)
  * @method static string greenBack(string $text)
@@ -28,8 +38,18 @@ use function count;
  * @method static string blueBack(string $text)
  * @method static string magentaBack(string $text)
  * @method static string cyanBack(string $text)
+ * @method static string light_grayBack(string $text)
+ * @method static string grayBack(string $text)
+ * @method static string light_redBack(string $text)
+ * @method static string light_greenBack(string $text)
+ * @method static string light_yellowBack(string $text)
+ * @method static string light_blueBack(string $text)
+ * @method static string light_magentaBack(string $text)
+ * @method static string light_cyanBack(string $text)
  * @method static string whiteBack(string $text)
+ *
  * @method static string defaultBack(string $text)
+ *
  * @method static string bold(string $text)
  * @method static string underscore(string $text)
  * @method static string blink(string $text)
@@ -48,28 +68,50 @@ class Console
 	private static $colors = true;
 	private static $timestamp_format = "d.m.y H:i:s.v";
 
-	private static $availableForegroundColors = [
-		'black' => ['set' => 30, 'unset' => 39],
-		'red' => ['set' => 31, 'unset' => 39],
-		'green' => ['set' => 32, 'unset' => 39],
-		'yellow' => ['set' => 33, 'unset' => 39],
-		'blue' => ['set' => 34, 'unset' => 39],
-		'magenta' => ['set' => 35, 'unset' => 39],
-		'cyan' => ['set' => 36, 'unset' => 39],
-		'white' => ['set' => 37, 'unset' => 39],
-		'default' => ['set' => 39, 'unset' => 39],
+	private static $colorFormat = "\033[%s;1m";     // 16-bit colors
+//	private static $extended = "\033[%s;5;%sm";     // 256-bit colors; 38 = foreground, 48 = background
+	private static $reset = "\033[0m";
+
+	private static $foregroundColors = [
+		'black' => 30,
+		'red' => 31,
+		'green' => 32,
+		'yellow' => 33,
+		'blue' => 34,
+		'magenta' => 35,
+		'cyan' => 36,
+		'light_gray' => 37,
+		'gray' => 90,
+		'light_red' => 91,
+		'light_green' => 92,
+		'light_yellow' => 93,
+		'light_blue' => 94,
+		'light_magenta' => 95,
+		'light_cyan' => 96,
+		'white' => 97,
+
+		'default' => 39,
 	];
 
-	private static $availableBackgroundColors = [
-		'black' => ['set' => 40, 'unset' => 49],
-		'red' => ['set' => 41, 'unset' => 49],
-		'green' => ['set' => 42, 'unset' => 49],
-		'yellow' => ['set' => 43, 'unset' => 49],
-		'blue' => ['set' => 44, 'unset' => 49],
-		'magenta' => ['set' => 45, 'unset' => 49],
-		'cyan' => ['set' => 46, 'unset' => 49],
-		'white' => ['set' => 47, 'unset' => 49],
-		'default' => ['set' => 49, 'unset' => 49],
+	private static $backgroundColors = [
+		'black' => 40,
+		'red' => 41,
+		'green' => 42,
+		'yellow' => 43,
+		'blue' => 44,
+		'magenta' => 45,
+		'cyan' => 46,
+		'light_gray' => 47,
+		'gray' => 100,
+		'light_red' => 101,
+		'light_green' => 102,
+		'light_yellow' => 103,
+		'light_blue' => 104,
+		'light_magenta' => 105,
+		'light_cyan' => 106,
+		'white' => 107,
+
+		'default' => 49,
 	];
 
 	private static $availableOptions = [
@@ -131,7 +173,7 @@ class Console
 
 	public static function debug(string $message, ...$args): void
 	{
-		self::writeln("[DEBUG ] " . vsprintf($message, $args));
+		self::writeln("[DEBUG ] " . vsprintf($message, $args), 'gray');
 	}
 
 	public static function info(string $message, ...$args): void
@@ -212,17 +254,13 @@ class Console
 		$unsetCodes = [];
 
 		if (null !== $foreground) {
-			$foreground = self::$availableForegroundColors[$foreground];
-
-			$setCodes[] = $foreground['set'];
-			$unsetCodes[] = $foreground['unset'];
+			$setCodes[] = self::$foregroundColors[$foreground];
+			$unsetCodes[] = self::$foregroundColors['default'];
 		}
 
 		if (null !== $background) {
-			$background = self::$availableBackgroundColors[$background];
-
-			$setCodes[] = $background['set'];
-			$unsetCodes[] = $background['unset'];
+			$setCodes[] = self::$backgroundColors[$background];
+			$unsetCodes[] = self::$backgroundColors['default'];
 		}
 
 		foreach ($options as $option) {
@@ -237,11 +275,16 @@ class Console
 		}
 
 		return sprintf(
-			"\033[%sm%s\033[%sm",
-			implode(';', $setCodes),
+			"%s%s%s",
+			sprintf(self::$colorFormat, implode(';', $setCodes)),
 			$text,
-			implode(';', $unsetCodes)
+			sprintf(self::$colorFormat, implode(';', $unsetCodes)),
 		);
+	}
+
+	public static function reset(string $text): string
+	{
+		return self::$reset . $text;
 	}
 
 	public static function __callStatic(string $name, array $arguments): string
@@ -256,9 +299,9 @@ class Console
 		$background = $backPos !== false;
 		$color = $background ? substr($name, 0, $backPos) : $name;
 
-		if ($background && in_array($color, array_keys(self::$availableBackgroundColors))) {
+		if ($background && in_array($color, array_keys(self::$backgroundColors))) {
 			return self::apply($arguments[0], null, $color, []);
-		} elseif (in_array($color, array_keys(self::$availableForegroundColors))) {
+		} elseif (in_array($color, array_keys(self::$foregroundColors))) {
 			return self::apply($arguments[0], $color, null, []);
 		}
 
