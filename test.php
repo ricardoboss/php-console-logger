@@ -7,6 +7,7 @@ use ricardoboss\Console;
 
 Console::open();
 
+Console::logLevel();
 Console::debug("This is a debug message.");
 Console::info("This is an info message.");
 Console::notice("This is a notice message.");

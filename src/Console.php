@@ -5,6 +5,7 @@ namespace ricardoboss;
 
 use BadMethodCallException;
 use DateTime;
+use RangeException;
 use RuntimeException;
 use Throwable;
 use function count;
@@ -67,6 +68,7 @@ class Console
 	private static bool $timestamps = true;
 	private static bool $colors = true;
 	private static string $timestamp_format = "d.m.y H:i:s.v";
+	private static int $log_level = 0;
 
 	private static string $colorFormat = "\033[%s;1m";     // 16-bit colors
 //	private static $extended = "\033[%s;5;%sm";     // 256-bit colors; 38 = foreground, 48 = background
@@ -170,6 +172,14 @@ class Console
 		self::$timestamp_format = $format;
 	}
 
+	public static function logLevel(int $level = 0): void
+	{
+		if ($level < 0 || $level > 7)
+			throw new RangeException("Log level can only be set between 0 and 7 (inclusive).");
+
+		self::$log_level = $level;
+	}
+
 	public static function link(string $link): string
 	{
 		return Console::cyan(Console::underscore($link));
@@ -177,36 +187,57 @@ class Console
 
 	public static function debug(string $message, ...$args): void
 	{
+		if (self::$log_level > 0)
+			return;
+
 		self::writeln("[DEBUG ] " . vsprintf($message, $args), 'gray');
 	}
 
 	public static function info(string $message, ...$args): void
 	{
+		if (self::$log_level > 1)
+			return;
+
 		self::writeln("[INFO  ] " . vsprintf($message, $args));
 	}
 
 	public static function notice(string $message, ...$args): void
 	{
+		if (self::$log_level > 2)
+			return;
+
 		self::writeln("[NOTICE] " . vsprintf($message, $args), 'blue');
 	}
 
 	public static function warn(string $message, ...$args): void
 	{
+		if (self::$log_level > 3)
+			return;
+
 		self::writeln("[WARN  ] " . vsprintf($message, $args), 'yellow');
 	}
 
 	public static function error(string $message, ...$args): void
 	{
+		if (self::$log_level > 4)
+			return;
+
 		self::writeln("[ERROR ] " . vsprintf($message, $args), 'red', null, [], true);
 	}
 
 	public static function critical(string $message, ...$args): void
 	{
+		if (self::$log_level > 5)
+			return;
+
 		self::writeln("[CRITIC] " . vsprintf($message, $args), 'magenta', null, ['bold'], true);
 	}
 
 	public static function alert(string $message, ...$args): void
 	{
+		if (self::$log_level > 6)
+			return;
+
 		self::writeln("[ALERT ] " . vsprintf($message, $args), null, 'yellow', ['bold'], true);
 	}
 
