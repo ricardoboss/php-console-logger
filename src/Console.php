@@ -58,21 +58,21 @@ use function count;
  */
 class Console
 {
-	/** @var resource|null */
-	private static $output_stream;
+	/** @var resource|false */
+	private static $output_stream = false;
 
-	/** @var resource|null */
-	private static $error_stream;
+	/** @var resource|false */
+	private static $error_stream = false;
 
-	private static $timestamps = true;
-	private static $colors = true;
-	private static $timestamp_format = "d.m.y H:i:s.v";
+	private static bool $timestamps = true;
+	private static bool $colors = true;
+	private static string $timestamp_format = "d.m.y H:i:s.v";
 
-	private static $colorFormat = "\033[%s;1m";     // 16-bit colors
+	private static string $colorFormat = "\033[%s;1m";     // 16-bit colors
 //	private static $extended = "\033[%s;5;%sm";     // 256-bit colors; 38 = foreground, 48 = background
-	private static $reset = "\033[0m";
+	private static string $reset = "\033[0m";
 
-	private static $foregroundColors = [
+	private static array $foregroundColors = [
 		'black' => 30,
 		'red' => 31,
 		'green' => 32,
@@ -93,7 +93,7 @@ class Console
 		'default' => 39,
 	];
 
-	private static $backgroundColors = [
+	private static array $backgroundColors = [
 		'black' => 40,
 		'red' => 41,
 		'green' => 42,
@@ -114,7 +114,7 @@ class Console
 		'default' => 49,
 	];
 
-	private static $availableOptions = [
+	private static array $availableOptions = [
 		'bold' => ['set' => 1, 'unset' => 22],
 		'underscore' => ['set' => 4, 'unset' => 24],
 		'blink' => ['set' => 5, 'unset' => 25],
@@ -124,11 +124,15 @@ class Console
 
 	public static function isOpen(): bool
 	{
-		return self::$output_stream !== null && self::$error_stream !== null;
+		return self::$output_stream !== false && self::$error_stream !== false;
 	}
 
-	public static function open(): void
+	public static function open(bool $throwIfOpen = true): void
 	{
+		if (self::isOpen() && $throwIfOpen) {
+			throw new RuntimeException("Unable to open output streams: already open.");
+		}
+
 		try {
 			self::$output_stream = fopen('php://stdout', 'w');
 			self::$error_stream = fopen('php://stderr', 'w');
@@ -137,17 +141,17 @@ class Console
 				if (self::$output_stream !== false)
 					try {
 						fclose(self::$output_stream);
-					} catch (Throwable $ignored) {
+					} catch (Throwable) {
 					}
 
 				if (self::$error_stream !== false)
 					try {
 						fclose(self::$error_stream);
-					} catch (Throwable $ignored) {
+					} catch (Throwable) {
 					}
 			});
 		} catch (Throwable $throwable) {
-			throw new RuntimeException("Unable to open output streams!", 0, $throwable);
+			throw new RuntimeException("Unable to open output streams!", previous: $throwable);
 		}
 	}
 
@@ -226,7 +230,7 @@ class Console
 		?string $foreground = null,
 		?string $background = null,
 		array $options = [],
-		?string $suffix = null,
+		?string $eol = null,
 		bool $error = false): void
 	{
 		$stream = $error ? self::$error_stream : self::$output_stream;
@@ -237,7 +241,7 @@ class Console
 			$message = $time . ' ' . $message;
 		}
 
-		fwrite($stream, $message . $suffix);
+		fwrite($stream, $message . $eol);
 		fflush($stream);
 	}
 
