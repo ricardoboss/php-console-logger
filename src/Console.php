@@ -131,26 +131,28 @@ class Console
 
 	public static function open(bool $throwIfOpen = true): void
 	{
-		if (self::isOpen() && $throwIfOpen) {
+		if ($throwIfOpen && self::isOpen()) {
 			throw new RuntimeException("Unable to open output streams: already open.");
 		}
 
 		try {
-			self::$output_stream = fopen('php://stdout', 'w');
-			self::$error_stream = fopen('php://stderr', 'w');
+			self::$output_stream = fopen('php://stdout', 'wb');
+			self::$error_stream = fopen('php://stderr', 'wb');
 
 			register_shutdown_function(function () {
-				if (self::$output_stream !== false)
+				if (self::$output_stream !== false) {
 					try {
 						fclose(self::$output_stream);
 					} catch (Throwable) {
 					}
+				}
 
-				if (self::$error_stream !== false)
+				if (self::$error_stream !== false) {
 					try {
 						fclose(self::$error_stream);
 					} catch (Throwable) {
 					}
+				}
 			});
 		} catch (Throwable $throwable) {
 			throw new RuntimeException("Unable to open output streams!", previous: $throwable);
@@ -174,8 +176,9 @@ class Console
 
 	public static function logLevel(int $level = 0): void
 	{
-		if ($level < 0 || $level > 7)
+		if ($level < 0 || $level > 7) {
 			throw new RangeException("Log level can only be set between 0 and 7 (inclusive).");
+		}
 
 		self::$log_level = $level;
 	}
@@ -187,63 +190,70 @@ class Console
 
 	public static function debug(string $message, ...$args): void
 	{
-		if (self::$log_level > 0)
+		if (self::$log_level > 0) {
 			return;
+		}
 
-		self::writeln("[DEBUG ] " . vsprintf($message, $args), 'gray');
+		self::writeln("[DEB] " . vsprintf($message, $args), 'gray');
 	}
 
 	public static function info(string $message, ...$args): void
 	{
-		if (self::$log_level > 1)
+		if (self::$log_level > 1) {
 			return;
+		}
 
-		self::writeln("[INFO  ] " . vsprintf($message, $args));
+		self::writeln("[INF] " . vsprintf($message, $args));
 	}
 
 	public static function notice(string $message, ...$args): void
 	{
-		if (self::$log_level > 2)
+		if (self::$log_level > 2) {
 			return;
+		}
 
-		self::writeln("[NOTICE] " . vsprintf($message, $args), 'blue');
+		self::writeln("[NTC] " . vsprintf($message, $args), 'blue');
 	}
 
 	public static function warn(string $message, ...$args): void
 	{
-		if (self::$log_level > 3)
+		if (self::$log_level > 3) {
 			return;
+		}
 
-		self::writeln("[WARN  ] " . vsprintf($message, $args), 'yellow');
+		self::writeln("[WRN] " . vsprintf($message, $args), 'yellow');
 	}
 
 	public static function error(string $message, ...$args): void
 	{
-		if (self::$log_level > 4)
+		if (self::$log_level > 4) {
 			return;
+		}
 
-		self::writeln("[ERROR ] " . vsprintf($message, $args), 'red', null, [], true);
+		self::writeln("[ERR] " . vsprintf($message, $args), 'red', null, [], true);
 	}
 
 	public static function critical(string $message, ...$args): void
 	{
-		if (self::$log_level > 5)
+		if (self::$log_level > 5) {
 			return;
+		}
 
-		self::writeln("[CRITIC] " . vsprintf($message, $args), 'magenta', null, ['bold'], true);
+		self::writeln("[CRT] " . vsprintf($message, $args), 'magenta', null, ['bold'], true);
 	}
 
 	public static function alert(string $message, ...$args): void
 	{
-		if (self::$log_level > 6)
+		if (self::$log_level > 6) {
 			return;
+		}
 
-		self::writeln("[ALERT ] " . vsprintf($message, $args), null, 'yellow', ['bold'], true);
+		self::writeln("[ALT] " . vsprintf($message, $args), null, 'yellow', ['bold'], true);
 	}
 
 	public static function emergency(string $message, ...$args): void
 	{
-		self::writeln("[EMERG ] " . vsprintf($message, $args), null, 'red', ['bold', 'underscore'], true);
+		self::writeln("[EGY] " . vsprintf($message, $args), null, 'red', ['bold', 'underscore'], true);
 	}
 
 	public static function writeln(
@@ -251,7 +261,8 @@ class Console
 		?string $foreground = null,
 		?string $background = null,
 		array $options = [],
-		bool $error = false): void
+		bool $error = false
+	): void
 	{
 		self::write($message, $foreground, $background, $options, "\r\n", $error);
 	}
@@ -262,7 +273,8 @@ class Console
 		?string $background = null,
 		array $options = [],
 		?string $eol = null,
-		bool $error = false): void
+		bool $error = false
+	): void
 	{
 		$stream = $error ? self::$error_stream : self::$output_stream;
 		$message = self::apply($message, $foreground, $background, $options);
@@ -280,10 +292,12 @@ class Console
 		string $text,
 		?string $foreground = null,
 		?string $background = null,
-		array $options = []): string
+		array $options = []
+	): string
 	{
-		if (!self::$colors)
+		if (!self::$colors) {
 			return $text;
+		}
 
 		$setCodes = [];
 		$unsetCodes = [];
@@ -326,17 +340,19 @@ class Console
 	{
 		$name = strtolower($name);
 
-		if (in_array($name, array_keys(self::$availableOptions))) {
+		if (array_key_exists($name, self::$availableOptions)) {
 			return self::apply($arguments[0], null, null, [$name]);
 		}
 
-		$backPos = strpos(strtolower($name), 'back');
+		$backPos = stripos($name, 'back');
 		$background = $backPos !== false;
 		$color = $background ? substr($name, 0, $backPos) : $name;
 
-		if ($background && in_array($color, array_keys(self::$backgroundColors))) {
+		if ($background && array_key_exists($color, self::$backgroundColors)) {
 			return self::apply($arguments[0], null, $color, []);
-		} elseif (in_array($color, array_keys(self::$foregroundColors))) {
+		}
+
+		if (array_key_exists($color, self::$foregroundColors)) {
 			return self::apply($arguments[0], $color, null, []);
 		}
 
