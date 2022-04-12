@@ -59,12 +59,6 @@ use function count;
  */
 class Console
 {
-	/** @var resource|false */
-	private static $output_stream = false;
-
-	/** @var resource|false */
-	private static $error_stream = false;
-
 	private static bool $timestamps = true;
 	private static bool $colors = true;
 	private static string $timestamp_format = "d.m.y H:i:s.v";
@@ -123,41 +117,6 @@ class Console
 		'reverse' => ['set' => 7, 'unset' => 27],
 		'conceal' => ['set' => 8, 'unset' => 28],
 	];
-
-	public static function isOpen(): bool
-	{
-		return self::$output_stream !== false && self::$error_stream !== false;
-	}
-
-	public static function open(bool $throwIfOpen = true): void
-	{
-		if ($throwIfOpen && self::isOpen()) {
-			throw new RuntimeException("Unable to open output streams: already open.");
-		}
-
-		try {
-			self::$output_stream = fopen('php://stdout', 'wb');
-			self::$error_stream = fopen('php://stderr', 'wb');
-
-			register_shutdown_function(function () {
-				if (self::$output_stream !== false) {
-					try {
-						fclose(self::$output_stream);
-					} catch (Throwable) {
-					}
-				}
-
-				if (self::$error_stream !== false) {
-					try {
-						fclose(self::$error_stream);
-					} catch (Throwable) {
-					}
-				}
-			});
-		} catch (Throwable $throwable) {
-			throw new RuntimeException("Unable to open output streams!", previous: $throwable);
-		}
-	}
 
 	public static function timestamps(bool $enable = true): void
 	{
@@ -276,7 +235,7 @@ class Console
 		bool $error = false
 	): void
 	{
-		$stream = $error ? self::$error_stream : self::$output_stream;
+		$stream = $error ? STDERR : STDOUT;
 		$message = self::apply($message, $foreground, $background, $options);
 
 		if (self::$timestamps) {

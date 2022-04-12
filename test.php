@@ -5,8 +5,6 @@ require 'src/Console.php';
 
 use ricardoboss\Console;
 
-Console::open();
-
 Console::logLevel();
 Console::debug("This is a debug message.");
 Console::info("This is an info message.");
