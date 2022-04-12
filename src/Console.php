@@ -215,11 +215,18 @@ class Console
 		self::writeln("[EGY] " . vsprintf($message, $args), null, 'red', ['bold', 'underscore'], true);
 	}
 
+	public static function strip(string $formattedMessage): string
+	{
+		$pattern = sprintf(preg_quote(self::$colorFormat, '/'), '.*?');
+
+		return preg_replace('/' . $pattern . '/', '', $formattedMessage);
+	}
+
 	/**
 	 * @param iterable<int, array<string, scalar>> $data
 	 * @return iterable<int, string>
 	 */
-	public static function table(iterable $data, bool $ascii = false, bool $compact = false, string $borderColor = 'gray'): iterable
+	public static function table(iterable $data, bool $ascii = false, bool $compact = false, bool $noBorder = false, string $borderColor = 'gray'): iterable
 	{
 		if (!is_array($data)) {
 			$rows = [];
@@ -243,7 +250,7 @@ class Console
 		}, []);
 
 		$columnWidths = array_map(static function (array $column): int {
-			return max(array_map('strlen', $column));
+			return max(array_map('mb_strlen', array_map([self::class, 'strip'], $column)));
 		}, $columns);
 
 		$hsep = $ascii ? '-' : '─';
@@ -295,26 +302,44 @@ class Console
 		};
 
 		$header = array_shift($rows);
-		yield $printSeparator(top: true);
+		if (!$noBorder) {
+			yield $printSeparator(top: true);
+		}
+
 		$output = '';
 		foreach ($header as $key => $value) {
-			$output .= $vsep . ' ' . str_pad($value, $columnWidths[$key], ' ', STR_PAD_RIGHT) . ' ';
+			if (!$noBorder) {
+				$output .= $vsep . ' ';
+			}
+			$output .= str_pad($value, $columnWidths[$key], ' ', STR_PAD_RIGHT) . ' ';
 		}
-		yield $output . $vsep;
-		yield $printSeparator(header: true);
+
+		if ($noBorder) {
+			yield $output;
+		} else {
+			yield $output . $vsep;
+			yield $printSeparator(header: true);
+		}
 
 		$rowCount = count($rows);
 		foreach ($rows as $i => $row) {
 			$output = "";
 			foreach ($row as $key => $value) {
-				$output .= $vsep . ' ' . str_pad($value, $columnWidths[$key], ' ', STR_PAD_RIGHT) . ' ';
+				if (!$noBorder) {
+					$output .= $vsep . ' ';
+				}
+				$output .= str_pad($value, $columnWidths[$key], ' ', STR_PAD_RIGHT) . ' ';
 			}
-			$output .= $vsep;
 
-			yield $output;
+			if ($noBorder) {
+				yield $output;
+			} else {
+				yield $output . $vsep;
+			}
+
 			$lastLine = $i === $rowCount - 1;
 
-			if ($lastLine || !$compact) {
+			if (!$noBorder && ($lastLine || !$compact)) {
 				yield $printSeparator(bottom: $lastLine);
 			}
 		}
