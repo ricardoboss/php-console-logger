@@ -311,6 +311,13 @@ class Console
 			return Console::$borderColor($output . $crossEnd);
 		};
 
+		$strPadVisual = static function (string $value, int $width): string
+		{
+			$actualLength = mb_strlen($value);
+			$strippedLength = mb_strlen(self::strip($value));
+			return str_pad($value, $width + ($actualLength - $strippedLength), ' ', STR_PAD_RIGHT);
+		};
+
 		$header = array_shift($rows);
 		if (!$noBorder) {
 			yield $printSeparator(top: true);
@@ -321,7 +328,7 @@ class Console
 			if (!$noBorder) {
 				$output .= $vsep . ' ';
 			}
-			$output .= str_pad($value, $columnWidths[$key], ' ', STR_PAD_RIGHT) . ' ';
+			$output .= $strPadVisual($value, $columnWidths[$key]) . ' ';
 		}
 
 		if ($noBorder) {
@@ -338,7 +345,7 @@ class Console
 				if (!$noBorder) {
 					$output .= $vsep . ' ';
 				}
-				$output .= str_pad($value, $columnWidths[$key], ' ', STR_PAD_RIGHT) . ' ';
+				$output .= $strPadVisual($value, $columnWidths[$key]) . ' ';
 			}
 
 			if ($noBorder) {

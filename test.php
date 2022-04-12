@@ -40,8 +40,8 @@ Console::notice("Call the methods with no format to restore the defaults.");
 Console::info("This is a table:");
 foreach (Console::table([
 	['name', 'age', 'email'],
-	['John', '25', 'john@acme.com'],
-	['Jane', '24', 'jane@example.com'],
-], compact: true, borderColor: 'yellow') as $line) {
+	[Console::yellow('Johnson'), '25', 'john@acme.com'],
+	[Console::yellow('Jane'), '24', 'jane@example.com'],
+], compact: true, borderColor: 'red') as $line) {
 	Console::info($line);
 }
