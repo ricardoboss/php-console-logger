@@ -215,6 +215,111 @@ class Console
 		self::writeln("[EGY] " . vsprintf($message, $args), null, 'red', ['bold', 'underscore'], true);
 	}
 
+	/**
+	 * @param iterable<int, array<string, scalar>> $data
+	 * @return iterable<int, string>
+	 */
+	public static function table(iterable $data, bool $ascii = false, bool $compact = false, string $borderColor = 'gray'): iterable
+	{
+		if (!is_array($data)) {
+			$rows = [];
+			foreach ($data as $row) {
+				$rows[] = $row;
+			}
+		} else {
+			$rows = $data;
+		}
+
+		$columns = array_reduce($rows, static function (array $carry, array $row): array {
+			foreach ($row as $key => $value) {
+				if (!isset($carry[$key])) {
+					$carry[$key] = [];
+				}
+
+				$carry[$key][] = $value;
+			}
+
+			return $carry;
+		}, []);
+
+		$columnWidths = array_map(static function (array $column): int {
+			return max(array_map('strlen', $column));
+		}, $columns);
+
+		$hsep = $ascii ? '-' : '─';
+		$vsep = Console::$borderColor($ascii ? '|' : '│');
+		$cross = $ascii ? '+' : '┼';
+
+		$headerHsep = $ascii ? '=' : '═';
+		$headerCrossStart = $ascii ? '+' : '╞';
+		$headerCrossMid = $ascii ? '+' : '╪';
+		$headerCrossEnd = $ascii ? '+' : '╡';
+
+		$crossStart = $ascii ? '+' : '├';
+		$crossEnd = $ascii ? '+' : '┤';
+		$crossStartTop = $ascii ? '+' : '┌';
+		$crossMidTop = $ascii ? '+' : '┬';
+		$crossEndTop = $ascii ? '+' : '┐';
+		$crossStartBottom = $ascii ? '+' : '└';
+		$crossMidBottom = $ascii ? '+' : '┴';
+		$crossEndBottom = $ascii ? '+' : '┘';
+
+		$printSeparator = static function (bool $top = false, bool $bottom = false, bool $header = false) use (
+			$columnWidths, $borderColor,
+			$hsep, $cross,
+			$headerHsep, $headerCrossStart, $headerCrossMid, $headerCrossEnd,
+			$crossStart, $crossEnd, $crossStartTop, $crossMidTop, $crossEndTop, $crossStartBottom, $crossMidBottom, $crossEndBottom,
+		): string {
+			$crossStart = $top ? $crossStartTop : ($header ? $headerCrossStart : ($bottom ? $crossStartBottom : $crossStart));
+			$crossMid = $top ? $crossMidTop : ($header ? $headerCrossMid : ($bottom ? $crossMidBottom : $cross));
+			$crossEnd = $top ? $crossEndTop : ($header ? $headerCrossEnd : ($bottom ? $crossEndBottom : $crossEnd));
+
+			$line = $header ? $headerHsep : $hsep;
+
+			if (empty($columnWidths)) {
+				return $crossStart . $line . $crossEnd;
+			}
+
+			$first = true;
+
+			$output = '';
+			foreach ($columnWidths as $width) {
+				if ($first) {
+					$output .= $crossStart . str_repeat($line, $width + 2);
+					$first = false;
+				} else {
+					$output .= $crossMid . str_repeat($line, $width + 2);
+				}
+			}
+			return Console::$borderColor($output . $crossEnd);
+		};
+
+		$header = array_shift($rows);
+		yield $printSeparator(top: true);
+		$output = '';
+		foreach ($header as $key => $value) {
+			$output .= $vsep . ' ' . str_pad($value, $columnWidths[$key], ' ', STR_PAD_RIGHT) . ' ';
+		}
+		yield $output . $vsep;
+		yield $printSeparator(header: true);
+
+		$rowCount = count($rows);
+		foreach ($rows as $i => $row) {
+			$output = "";
+			foreach ($row as $key => $value) {
+				$output .= $vsep . ' ' . str_pad($value, $columnWidths[$key], ' ', STR_PAD_RIGHT) . ' ';
+			}
+			$output .= $vsep;
+
+			yield $output;
+			$lastLine = $i === $rowCount - 1;
+
+			if ($lastLine || !$compact) {
+				yield $printSeparator(bottom: $lastLine);
+			}
+		}
+	}
+
 	public static function writeln(
 		string $message,
 		?string $foreground = null,

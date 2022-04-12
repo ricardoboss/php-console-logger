@@ -37,4 +37,11 @@ Console::colors();
 Console::timestamps();
 Console::notice("Call the methods with no format to restore the defaults.");
 
-Console::warn("The streams get closed automatically when the runtime shuts down.");
+Console::info("This is a table:");
+foreach (Console::table([
+	['name', 'age', 'email'],
+	['John', '25', 'john@acme.com'],
+	['Jane', '24', 'jane@example.com'],
+], compact: true, borderColor: 'yellow') as $line) {
+	Console::info($line);
+}
