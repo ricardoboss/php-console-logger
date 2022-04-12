@@ -6,8 +6,7 @@ namespace ricardoboss;
 use BadMethodCallException;
 use DateTime;
 use RangeException;
-use RuntimeException;
-use Throwable;
+use Stringable;
 use function count;
 
 /**
@@ -223,7 +222,7 @@ class Console
 	}
 
 	/**
-	 * @param iterable<int, array<string, scalar>> $data
+	 * @param iterable<int, array<array-key, scalar|\Stringable|null>|array> $data
 	 * @return iterable<int, string>
 	 */
 	public static function table(iterable $data, bool $ascii = false, bool $compact = false, bool $noBorder = false, string $borderColor = 'gray'): iterable
@@ -236,6 +235,17 @@ class Console
 		} else {
 			$rows = $data;
 		}
+
+		foreach ($rows as &$row) {
+			foreach ($row as &$cell) {
+				if (is_array($cell)) {
+					$cell = implode(', ', $cell);
+				} else if (is_a($cell, Stringable::class) || is_numeric($cell)) {
+					$cell = (string)$cell;
+				}
+			}
+		}
+		unset($row, $cell);
 
 		$columns = array_reduce($rows, static function (array $carry, array $row): array {
 			foreach ($row as $key => $value) {
