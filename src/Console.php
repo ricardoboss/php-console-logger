@@ -5,6 +5,7 @@ namespace ricardoboss;
 
 use BadMethodCallException;
 use DateTime;
+use InvalidArgumentException;
 use RangeException;
 use Stringable;
 use function count;
@@ -58,16 +59,7 @@ use function count;
  */
 class Console
 {
-	private static bool $timestamps = true;
-	private static bool $colors = true;
-	private static string $timestamp_format = "d.m.y H:i:s.v";
-	private static int $log_level = 0;
-
-	private static string $colorFormat = "\033[%s;1m";     // 16-bit colors
-//	private static $extended = "\033[%s;5;%sm";     // 256-bit colors; 38 = foreground, 48 = background
-	private static string $reset = "\033[0m";
-
-	private static array $foregroundColors = [
+	public const FOREGROUNDS = [
 		'black' => 30,
 		'red' => 31,
 		'green' => 32,
@@ -88,7 +80,7 @@ class Console
 		'default' => 39,
 	];
 
-	private static array $backgroundColors = [
+	public const BACKGROUNDS = [
 		'black' => 40,
 		'red' => 41,
 		'green' => 42,
@@ -109,12 +101,32 @@ class Console
 		'default' => 49,
 	];
 
-	private static array $availableOptions = [
+	public const OPTIONS = [
 		'bold' => ['set' => 1, 'unset' => 22],
 		'underscore' => ['set' => 4, 'unset' => 24],
 		'blink' => ['set' => 5, 'unset' => 25],
 		'reverse' => ['set' => 7, 'unset' => 27],
 		'conceal' => ['set' => 8, 'unset' => 28],
+	];
+
+	private static bool $timestamps = true;
+	private static bool $colors = true;
+	private static string $timestamp_format = "d.m.y H:i:s.v";
+	private static int $log_level = 0;
+
+	private static string $colorFormat = "\033[%s;1m";     // 16-bit colors
+//	private static $extended = "\033[%s;5;%sm";     // 256-bit colors; 38 = foreground, 48 = background
+	private static string $reset = "\033[0m";
+
+	private static array $logLevelTags = [
+		'debug'     => 'DEBUG    ',
+		'info'      => 'INFO     ',
+		'notice'    => 'NOTICE   ',
+		'warning'   => 'WARNING  ',
+		'error'     => 'ERROR    ',
+		'critical'  => 'CRITICAL ',
+		'alert'     => 'ALERT    ',
+		'emergency' => 'EMERGENCY',
 	];
 
 	public static function timestamps(bool $enable = true): void
@@ -141,9 +153,27 @@ class Console
 		self::$log_level = $level;
 	}
 
+	public static function logLevelTag(string $level, string $tag, bool $autoAdjustLengths = true): void
+	{
+		if (!array_key_exists($level, self::$logLevelTags)) {
+			throw new InvalidArgumentException("Log level '$level' is not valid.");
+		}
+
+		self::$logLevelTags[$level] = $tag;
+
+		if (!$autoAdjustLengths) {
+			return;
+		}
+
+		$maxLength = max(array_map('mb_strlen', array_map('rtrim', self::$logLevelTags)));
+		foreach (self::$logLevelTags as $key => $value) {
+			self::$logLevelTags[$key] = str_pad(rtrim($value), $maxLength, ' ', STR_PAD_RIGHT);
+		}
+	}
+
 	public static function link(string $link): string
 	{
-		return Console::cyan(Console::underscore($link));
+		return self::cyan(self::underscore($link));
 	}
 
 	public static function debug(string $message, ...$args): void
@@ -152,7 +182,7 @@ class Console
 			return;
 		}
 
-		self::writeln("[DEB] " . vsprintf($message, $args), 'gray');
+		self::writeln("[" . self::$logLevelTags['debug'] . "] " . vsprintf($message, $args), 'gray');
 	}
 
 	public static function info(string $message, ...$args): void
@@ -161,7 +191,7 @@ class Console
 			return;
 		}
 
-		self::writeln("[INF] " . vsprintf($message, $args));
+		self::writeln("[" . self::$logLevelTags['info'] . "] " . vsprintf($message, $args));
 	}
 
 	public static function notice(string $message, ...$args): void
@@ -170,7 +200,7 @@ class Console
 			return;
 		}
 
-		self::writeln("[NTC] " . vsprintf($message, $args), 'blue');
+		self::writeln("[" . self::$logLevelTags['notice'] . "] " . vsprintf($message, $args), 'blue');
 	}
 
 	public static function warn(string $message, ...$args): void
@@ -179,7 +209,7 @@ class Console
 			return;
 		}
 
-		self::writeln("[WRN] " . vsprintf($message, $args), 'yellow');
+		self::writeln("[" . self::$logLevelTags['warning'] . "] " . vsprintf($message, $args), 'yellow');
 	}
 
 	public static function error(string $message, ...$args): void
@@ -188,7 +218,7 @@ class Console
 			return;
 		}
 
-		self::writeln("[ERR] " . vsprintf($message, $args), 'red', null, [], true);
+		self::writeln("[" . self::$logLevelTags['error'] . "] " . vsprintf($message, $args), 'red', error: true);
 	}
 
 	public static function critical(string $message, ...$args): void
@@ -197,7 +227,7 @@ class Console
 			return;
 		}
 
-		self::writeln("[CRT] " . vsprintf($message, $args), 'magenta', null, ['bold'], true);
+		self::writeln("[" . self::$logLevelTags['critical'] . "] " . vsprintf($message, $args), 'magenta', options: ['bold'], error: true);
 	}
 
 	public static function alert(string $message, ...$args): void
@@ -206,12 +236,12 @@ class Console
 			return;
 		}
 
-		self::writeln("[ALT] " . vsprintf($message, $args), null, 'yellow', ['bold'], true);
+		self::writeln("[" . self::$logLevelTags['alert'] . "] " . vsprintf($message, $args), background: 'yellow', options: ['bold'], error: true);
 	}
 
 	public static function emergency(string $message, ...$args): void
 	{
-		self::writeln("[EGY] " . vsprintf($message, $args), null, 'red', ['bold', 'underscore'], true);
+		self::writeln("[" . self::$logLevelTags['emergency'] . "] " . vsprintf($message, $args), background: 'red', options: ['bold'], error: true);
 	}
 
 	public static function strip(string $formattedMessage): string
@@ -264,7 +294,7 @@ class Console
 		}, $columns);
 
 		$hsep = $ascii ? '-' : '─';
-		$vsep = Console::$borderColor($ascii ? '|' : '│');
+		$vsep = self::$borderColor($ascii ? '|' : '│');
 		$cross = $ascii ? '+' : '┼';
 
 		$headerHsep = $ascii ? '=' : '═';
@@ -367,10 +397,11 @@ class Console
 		?string $foreground = null,
 		?string $background = null,
 		array $options = [],
+		string $eol = "\r\n",
 		bool $error = false
 	): void
 	{
-		self::write($message, $foreground, $background, $options, "\r\n", $error);
+		self::write($message, $foreground, $background, $options, $eol, $error);
 	}
 
 	public static function write(
@@ -409,17 +440,17 @@ class Console
 		$unsetCodes = [];
 
 		if (null !== $foreground) {
-			$setCodes[] = self::$foregroundColors[$foreground];
-			$unsetCodes[] = self::$foregroundColors['default'];
+			$setCodes[] = self::FOREGROUNDS[$foreground];
+			$unsetCodes[] = self::FOREGROUNDS['default'];
 		}
 
 		if (null !== $background) {
-			$setCodes[] = self::$backgroundColors[$background];
-			$unsetCodes[] = self::$backgroundColors['default'];
+			$setCodes[] = self::BACKGROUNDS[$background];
+			$unsetCodes[] = self::BACKGROUNDS['default'];
 		}
 
 		foreach ($options as $option) {
-			$option = self::$availableOptions[$option];
+			$option = self::OPTIONS[$option];
 
 			$setCodes[] = $option['set'];
 			$unsetCodes[] = $option['unset'];
@@ -446,7 +477,7 @@ class Console
 	{
 		$name = strtolower($name);
 
-		if (array_key_exists($name, self::$availableOptions)) {
+		if (array_key_exists($name, self::OPTIONS)) {
 			return self::apply($arguments[0], null, null, [$name]);
 		}
 
@@ -454,11 +485,11 @@ class Console
 		$background = $backPos !== false;
 		$color = $background ? substr($name, 0, $backPos) : $name;
 
-		if ($background && array_key_exists($color, self::$backgroundColors)) {
+		if ($background && array_key_exists($color, self::BACKGROUNDS)) {
 			return self::apply($arguments[0], null, $color, []);
 		}
 
-		if (array_key_exists($color, self::$foregroundColors)) {
+		if (array_key_exists($color, self::FOREGROUNDS)) {
 			return self::apply($arguments[0], $color, null, []);
 		}
 

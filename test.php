@@ -42,6 +42,19 @@ foreach (Console::table([
 	['name', 'age', 'email'],
 	[Console::yellow('Johnson'), '25', 'john@acme.com'],
 	[Console::yellow('Jane'), '24', 'jane@example.com'],
-], compact: true, borderColor: 'red') as $line) {
+], compact: true, borderColor: 'green') as $line) {
 	Console::info($line);
 }
+
+Console::emergency("This has a really long tag");
+Console::logLevelTag('info', 'INFORMATION');
+Console::info("You can also adjust the tag for each log level.");
+Console::info("The padding on the right gets adjusted automatically.");
+Console::logLevelTag('emergency', 'EMERG');
+Console::emergency("Now the tag is shorter.");
+Console::logLevelTag('warning', 'WARN');
+Console::logLevelTag('critical', 'CRIT');
+Console::logLevelTag('notice', 'NOTI');
+Console::logLevelTag('info', 'INFO');
+Console::info("And even shorter");
+Console::emergency("This is fine.");
