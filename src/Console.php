@@ -173,7 +173,7 @@ class Console
 
 	public static function link(string $link): string
 	{
-		return self::cyan(self::underscore($link));
+		return self::blue(self::underscore($link));
 	}
 
 	public static function debug(string $message, ...$args): void
