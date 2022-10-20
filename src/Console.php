@@ -255,7 +255,7 @@ class Console
 	 * @param iterable<int, array<array-key, scalar|\Stringable|null>|array> $data
 	 * @return iterable<int, string>
 	 */
-	public static function table(iterable $data, bool $ascii = false, bool $compact = false, bool $noBorder = false, string $borderColor = 'gray'): iterable
+	public static function table(iterable $data, bool $ascii = false, bool $compact = false, bool $noOuterBorder = false, bool $noInnerBorder = false, string $borderColor = 'gray'): iterable
 	{
 		if (!is_array($data)) {
 			$rows = [];
@@ -312,7 +312,7 @@ class Console
 		$headerCrossEnd = $compact ? $crossEnd : ($ascii ? '+' : '╡');
 
 		$printSeparator = static function (bool $top = false, bool $bottom = false, bool $header = false) use (
-			$columnWidths, $borderColor,
+			$columnWidths, $noOuterBorder, $noInnerBorder, $borderColor,
 			$hsep, $cross,
 			$headerHsep, $headerCrossStart, $headerCrossMid, $headerCrossEnd,
 			$crossStart, $crossEnd, $crossStartTop, $crossMidTop, $crossEndTop, $crossStartBottom, $crossMidBottom, $crossEndBottom,
@@ -321,64 +321,101 @@ class Console
 			$crossMid = $top ? $crossMidTop : ($header ? $headerCrossMid : ($bottom ? $crossMidBottom : $cross));
 			$crossEnd = $top ? $crossEndTop : ($header ? $headerCrossEnd : ($bottom ? $crossEndBottom : $crossEnd));
 
-			$line = $header ? $headerHsep : $hsep;
+			$sep = $header ? $headerHsep : $hsep;
 
 			if (empty($columnWidths)) {
-				return $crossStart . $line . $crossEnd;
+				return $crossStart . $sep . $crossEnd;
 			}
-
-			$first = true;
 
 			$output = '';
+//			$hsepPadding = $noInnerBorder && $noOuterBorder ? 0 : ($noInnerBorder || $noOuterBorder ? 1 : 2);
+			$col = 0;
 			foreach ($columnWidths as $width) {
-				if ($first) {
-					$output .= $crossStart . str_repeat($line, $width + 2);
-					$first = false;
+				if ($noOuterBorder) {
+					if ($col === 0 || $col === count($columnWidths) - 1) {
+						$sepWidth = $width + 1; // no padding at/start/end of row
+					} else {
+						$sepWidth = $width + 2; // padding between cell walls
+					}
+				} else if ($noInnerBorder) {
+					if ($col > 0 && $col < count($columnWidths) - 1) {
+						$sepWidth = $width; // no padding from cell to cell
+					} else {
+						$sepWidth = $width + 1; // padding at start/end of row
+					}
 				} else {
-					$output .= $crossMid . str_repeat($line, $width + 2);
+					$sepWidth = $width + 2; // padding in each cell is the same
 				}
+
+				$sepStr = str_repeat($sep, $sepWidth);
+
+				if ($col === 0) {
+					if (!$noOuterBorder) {
+						$output .= $crossStart;
+					}
+				} else if (!$noInnerBorder) {
+					$output .= $crossMid;
+				} else {
+					$output .= $sep;
+				}
+
+				$output .= $sepStr;
+
+				$col++;
 			}
-			return Console::$borderColor($output . $crossEnd);
+
+			if (!$noOuterBorder) {
+				$output .= $crossEnd;
+			}
+
+			return Console::$borderColor($output);
 		};
 
 		$strPadVisual = static function (string $value, int $width): string
 		{
 			$actualLength = mb_strlen($value);
 			$strippedLength = mb_strlen(self::strip($value));
-			return str_pad($value, $width + ($actualLength - $strippedLength), ' ', STR_PAD_RIGHT);
+			return str_pad($value, $width + ($actualLength - $strippedLength));
 		};
 
 		$header = array_shift($rows);
-		if (!$noBorder) {
+		if (!$noOuterBorder) {
 			yield $printSeparator(top: true);
 		}
 
 		$output = '';
 		foreach ($header as $key => $value) {
-			if (!$noBorder) {
+			if ((empty($output) && !$noOuterBorder) || (!empty($output) && !$noInnerBorder)) {
 				$output .= $vsep . ' ';
 			}
 			$output .= $strPadVisual($value, $columnWidths[$key]) . ' ';
 		}
 
-		if ($noBorder) {
+		if ($noInnerBorder && $noOuterBorder) {
 			yield $output;
 		} else {
-			yield $output . $vsep;
-			yield $printSeparator(header: true);
+			if ($noOuterBorder) {
+				yield $output;
+			} else {
+				yield $output . $vsep;
+			}
+
+			if (!$noInnerBorder) {
+				yield $printSeparator(header: true);
+			}
 		}
 
 		$rowCount = count($rows);
 		foreach ($rows as $i => $row) {
 			$output = "";
 			foreach ($row as $key => $value) {
-				if (!$noBorder) {
+				if ((empty($output) && !$noOuterBorder) || (!empty($output) && !$noInnerBorder)) {
 					$output .= $vsep . ' ';
 				}
 				$output .= $strPadVisual($value, $columnWidths[$key]) . ' ';
 			}
 
-			if ($noBorder) {
+			if ($noOuterBorder) {
 				yield $output;
 			} else {
 				yield $output . $vsep;
@@ -386,7 +423,7 @@ class Console
 
 			$lastLine = $i === $rowCount - 1;
 
-			if (!$noBorder && ($lastLine || !$compact)) {
+			if (((!$lastLine && !$noInnerBorder) || ($lastLine && !$noOuterBorder)) && ($lastLine || !$compact)) {
 				yield $printSeparator(bottom: $lastLine);
 			}
 		}
