@@ -266,6 +266,10 @@ class Console
 			$rows = $data;
 		}
 
+		if (empty($rows)) {
+			return "";
+		}
+
 		foreach ($rows as &$row) {
 			foreach ($row as &$cell) {
 				if (is_array($cell)) {
@@ -328,7 +332,6 @@ class Console
 			}
 
 			$output = '';
-//			$hsepPadding = $noInnerBorder && $noOuterBorder ? 0 : ($noInnerBorder || $noOuterBorder ? 1 : 2);
 			$col = 0;
 			foreach ($columnWidths as $width) {
 				if ($noOuterBorder) {
