@@ -297,11 +297,6 @@ class Console
 		$vsep = self::$borderColor($ascii ? '|' : '│');
 		$cross = $ascii ? '+' : '┼';
 
-		$headerHsep = $ascii ? '=' : '═';
-		$headerCrossStart = $ascii ? '+' : '╞';
-		$headerCrossMid = $ascii ? '+' : '╪';
-		$headerCrossEnd = $ascii ? '+' : '╡';
-
 		$crossStart = $ascii ? '+' : '├';
 		$crossEnd = $ascii ? '+' : '┤';
 		$crossStartTop = $ascii ? '+' : '┌';
@@ -310,6 +305,11 @@ class Console
 		$crossStartBottom = $ascii ? '+' : '└';
 		$crossMidBottom = $ascii ? '+' : '┴';
 		$crossEndBottom = $ascii ? '+' : '┘';
+
+		$headerHsep = $compact ? $hsep : ($ascii ? '=' : '═');
+		$headerCrossStart = $compact ? $crossStart : ($ascii ? '+' : '╞');
+		$headerCrossMid = $compact ? $cross : ($ascii ? '+' : '╪');
+		$headerCrossEnd = $compact ? $crossEnd : ($ascii ? '+' : '╡');
 
 		$printSeparator = static function (bool $top = false, bool $bottom = false, bool $header = false) use (
 			$columnWidths, $borderColor,
