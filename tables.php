@@ -6,9 +6,8 @@ use ricardoboss\Console;
 require_once 'src/Console.php';
 
 $simple = [
-	['col1', 'col2', 'col3'],
-	['row1-1', 'row1-2', ''],
-	['row2-1', 'row2-2', ''],
+	['col1' => 'row1-1', 'col2' => 'row1-2', 'col3' => ''],
+	['col1' => 'row2-1', 'col2' => 'row2-2', 'col3' => ''],
 ];
 
 $configs = [
@@ -25,6 +24,7 @@ $configs = [
 	[$simple, 'ascii' => false, 'compact' => true, 'noOuterBorder' => false, 'noInnerBorder' => true],
 	[$simple, 'ascii' => true, 'compact' => true, 'noOuterBorder' => false, 'noInnerBorder' => true],
 	[$simple, 'ascii' => false, 'compact' => false, 'noOuterBorder' => true, 'noInnerBorder' => true],
+	[$simple, 'headers' => ['First Column', 'Second Column', 'Third Column']],
 ];
 
 foreach ($configs as $i => $params) {

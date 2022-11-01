@@ -255,7 +255,7 @@ class Console
 	 * @param iterable<int, array<array-key, scalar|\Stringable|null>|array> $data
 	 * @return iterable<int, string>
 	 */
-	public static function table(iterable $data, bool $ascii = false, bool $compact = false, bool $noOuterBorder = false, bool $noInnerBorder = false, string $borderColor = 'gray'): iterable
+	public static function table(iterable $data, bool $ascii = false, bool $compact = false, bool $noOuterBorder = false, bool $noInnerBorder = false, string $borderColor = 'gray', ?array $headers = null): iterable
 	{
 		if (!is_array($data)) {
 			$rows = [];
@@ -281,13 +281,21 @@ class Console
 		}
 		unset($row, $cell);
 
-		$columns = array_reduce($rows, static function (array $carry, array $row): array {
-			foreach ($row as $key => $value) {
+		$cellKeys = array_keys($rows[0]);
+		$headers ??= $cellKeys;
+
+		if (count($headers) !== count($cellKeys)) {
+			throw new InvalidArgumentException(sprintf("Invalid number of headers! Got %d headers but rows consist of %d cells", count($headers), count($cellKeys)));
+		}
+
+		$columns = array_reduce($rows, static function (array $carry, array $row) use ($cellKeys, $headers): array {
+			for ($i = 0, $iMax = count($cellKeys); $i < $iMax; $i++) {
+				$key = $cellKeys[$i];
 				if (!isset($carry[$key])) {
-					$carry[$key] = [];
+					$carry[$key] = [$headers[$i]];
 				}
 
-				$carry[$key][] = $value;
+				$carry[$key][] = $row[$key];
 			}
 
 			return $carry;
@@ -381,17 +389,17 @@ class Console
 			return str_pad($value, $width + ($actualLength - $strippedLength));
 		};
 
-		$header = array_shift($rows);
 		if (!$noOuterBorder) {
 			yield $printSeparator(top: true);
 		}
 
 		$output = '';
-		foreach ($header as $key => $value) {
+		for ($i = 0, $iMax = count($cellKeys); $i < $iMax; $i++) {
 			if ((empty($output) && !$noOuterBorder) || (!empty($output) && !$noInnerBorder)) {
 				$output .= $vsep . ' ';
 			}
-			$output .= $strPadVisual($value, $columnWidths[$key]) . ' ';
+
+			$output .= $strPadVisual($headers[$i], $columnWidths[$cellKeys[$i]]) . ' ';
 		}
 
 		if ($noInnerBorder && $noOuterBorder) {
