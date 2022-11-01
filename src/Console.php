@@ -255,7 +255,7 @@ class Console
 	 * @param iterable<int, array<array-key, scalar|\Stringable|null>|array> $data
 	 * @return iterable<int, string>
 	 */
-	public static function table(iterable $data, bool $ascii = false, bool $compact = false, bool $noOuterBorder = false, bool $noInnerBorder = false, string $borderColor = 'gray', ?array $headers = null): iterable
+	public static function table(iterable $data, bool $ascii = false, bool $compact = false, bool $noOuterBorder = false, bool $noInnerBorder = false, bool $noHeaders = false, string $borderColor = 'gray', ?array $headers = null): iterable
 	{
 		if (!is_array($data)) {
 			$rows = [];
@@ -288,11 +288,15 @@ class Console
 			throw new InvalidArgumentException(sprintf("Invalid number of headers! Got %d headers but rows consist of %d cells", count($headers), count($cellKeys)));
 		}
 
-		$columns = array_reduce($rows, static function (array $carry, array $row) use ($cellKeys, $headers): array {
+		$columns = array_reduce($rows, static function (array $carry, array $row) use ($cellKeys, $headers, $noHeaders): array {
 			for ($i = 0, $iMax = count($cellKeys); $i < $iMax; $i++) {
 				$key = $cellKeys[$i];
 				if (!isset($carry[$key])) {
-					$carry[$key] = [$headers[$i]];
+					$carry[$key] = [];
+
+					if (!$noHeaders) {
+						$carry[$key][] = $headers[$i];
+					}
 				}
 
 				$carry[$key][] = $row[$key];
@@ -394,25 +398,28 @@ class Console
 		}
 
 		$output = '';
-		for ($i = 0, $iMax = count($cellKeys); $i < $iMax; $i++) {
-			if ((empty($output) && !$noOuterBorder) || (!empty($output) && !$noInnerBorder)) {
-				$output .= $vsep . ' ';
+
+		if (!$noHeaders) {
+			for ($i = 0, $iMax = count($cellKeys); $i < $iMax; $i++) {
+				if ((empty($output) && !$noOuterBorder) || (!empty($output) && !$noInnerBorder)) {
+					$output .= $vsep . ' ';
+				}
+
+				$output .= $strPadVisual($headers[$i], $columnWidths[$cellKeys[$i]]) . ' ';
 			}
 
-			$output .= $strPadVisual($headers[$i], $columnWidths[$cellKeys[$i]]) . ' ';
-		}
-
-		if ($noInnerBorder && $noOuterBorder) {
-			yield $output;
-		} else {
-			if ($noOuterBorder) {
+			if ($noInnerBorder && $noOuterBorder) {
 				yield $output;
 			} else {
-				yield $output . $vsep;
-			}
+				if ($noOuterBorder) {
+					yield $output;
+				} else {
+					yield $output . $vsep;
+				}
 
-			if (!$noInnerBorder) {
-				yield $printSeparator(header: true);
+				if (!$noInnerBorder) {
+					yield $printSeparator(header: true);
+				}
 			}
 		}
 
