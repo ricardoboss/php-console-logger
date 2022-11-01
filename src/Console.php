@@ -405,7 +405,7 @@ class Console
 					$output .= $vsep . ' ';
 				}
 
-				$output .= $strPadVisual($headers[$i], $columnWidths[$cellKeys[$i]]) . ' ';
+				$output .= $strPadVisual((string) $headers[$i], $columnWidths[$cellKeys[$i]]) . ' ';
 			}
 
 			if ($noInnerBorder && $noOuterBorder) {
